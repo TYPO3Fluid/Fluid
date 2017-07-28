@@ -48,6 +48,13 @@ class ArgumentDefinition
     protected $defaultValue = null;
 
     /**
+     * Defines, if the ObjectAccessNodes inside this argument gets escaped
+     *
+     * @var boolean
+     */
+    protected $escaping = false;
+
+    /**
      * Constructor for this argument definition.
      *
      * @param string $name Name of argument
@@ -56,7 +63,7 @@ class ArgumentDefinition
      * @param boolean $required TRUE if argument is required
      * @param mixed $defaultValue Default value
      */
-    public function __construct($name, $type, $description, $required, $defaultValue = null)
+    public function __construct($name, $type, $description = null, $required = false, $defaultValue = null)
     {
         $this->name = $name;
         $this->type = $type;
@@ -96,6 +103,16 @@ class ArgumentDefinition
     }
 
     /**
+     * @param string $description
+     * @return ArgumentDefinition
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    /**
      * Get the optionality of the argument
      *
      * @return boolean TRUE if argument is optional
@@ -103,6 +120,18 @@ class ArgumentDefinition
     public function isRequired()
     {
         return $this->required;
+    }
+
+    /**
+     * Make this argument required
+     *
+     * @param bool $required
+     * @return ArgumentDefinition
+     */
+    public function setRequired($required)
+    {
+        $this->required = $required;
+        return $this;
     }
 
     /**
@@ -114,4 +143,35 @@ class ArgumentDefinition
     {
         return $this->defaultValue;
     }
+
+    /**
+     * Sets a default value for this argument
+     *
+     * @param mixed $defaultValue
+     * @return ArgumentDefinition
+     */
+    public function setDefaultValue($defaultValue)
+    {
+        $this->defaultValue = $defaultValue;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEscaped()
+    {
+        return $this->escaping;
+    }
+
+    /**
+     * @param bool $escaping
+     * @return ArgumentDefinition
+     */
+    public function setEscaping($escaping)
+    {
+        $this->escaping = $escaping;
+        return $this;
+    }
+
 }

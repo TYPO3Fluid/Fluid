@@ -42,8 +42,14 @@ abstract class AbstractConditionViewHelper extends AbstractViewHelper
      */
     public function initializeArguments()
     {
-        $this->registerArgument('then', 'mixed', 'Value to be returned if the condition if met.', false);
-        $this->registerArgument('else', 'mixed', 'Value to be returned if the condition if not met.', false);
+        $this->createArgument('then', 'mixed')
+            ->setDescription('Value to be returned if the condition if met.')
+            ->setRequired(false)
+            ->setEscaping(true);
+        $this->createArgument('else', 'mixed')
+            ->setDescription('Value to be returned if the condition if not met.')
+            ->setRequired(false)
+            ->setEscaping(true);
         $this->registerArgument('condition', 'boolean', 'Condition expression conforming to Fluid boolean rules', false, false);
     }
 

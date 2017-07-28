@@ -41,7 +41,13 @@ class EscapingNode extends AbstractNode
      */
     public function evaluate(RenderingContextInterface $renderingContext)
     {
-        return htmlspecialchars($this->node->evaluate($renderingContext), ENT_QUOTES);
+        $nodeReturnValue = $this->node->evaluate($renderingContext);
+
+        if (is_array($nodeReturnValue) || (is_object($nodeReturnValue) && !method_exists($nodeReturnValue, '__toString'))) {
+            return $nodeReturnValue;
+        }
+
+        return htmlspecialchars(strval($nodeReturnValue), ENT_QUOTES);
     }
 
     /**

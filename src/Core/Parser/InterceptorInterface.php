@@ -19,6 +19,7 @@ interface InterceptorInterface
     const INTERCEPT_CLOSING_VIEWHELPER = 2;
     const INTERCEPT_TEXT = 3;
     const INTERCEPT_OBJECTACCESSOR = 4;
+    const INTERCEPT_VIEWHELPER_ARGUMENT = 5;
 
     /**
      * The interceptor can process the given node at will and must return a node

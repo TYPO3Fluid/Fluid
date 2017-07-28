@@ -16,22 +16,22 @@ Ternary expression: {checkTernary ? ternaryTrue : ternaryFalse}
 <f:if condition="1" then="1 === TRUE" />
 <f:if condition="(0)" else="(0) === FALSE" />
 <f:if condition="(1)" then="(1) === TRUE" />
-<f:if condition="0 && 0" else="0 && 0 === FALSE" />
+<f:if condition="0 && 0" else="0 and 0 === FALSE" />
 <f:if condition="0 || 0" else="0 || 0 === FALSE" />
-<f:if condition="1 && 0" else="1 && 0 === FALSE" />
-<f:if condition="0 && 1" else="0 && 1 === FALSE" />
+<f:if condition="1 && 0" else="1 and 0 === FALSE" />
+<f:if condition="0 && 1" else="0 and 1 === FALSE" />
 <f:if condition="1 || 0" then="1 || 0 === TRUE" />
 <f:if condition="0 || 1" then="0 || 1 === TRUE" />
-<f:if condition="0 || 1 && 0" else="0 || 1 && 0 === FALSE" />
-<f:if condition="0 || 1 && 1" then="0 || 1 && 1 === TRUE" />
-<f:if condition="{varfalse}" else="$varfalse === FALSE" />
-<f:if condition="{vartrue}" then="$vartrue === TRUE" />
-<f:if condition="{vararray1} == {vararray2}" else="$vararray1 == $vararray2 === FALSE" />
-<f:if condition="({vararray1} == {vararray1}) && {vartrue}" then="($vararray1 == $vararray1) && $vartrue === TRUE" />
-<f:if condition="{varfalse} == {varfalse}" then="$varfalse == $varfalse === TRUE" />
-<f:if condition="{varfalse} != {varfalse}" else="$varfalse != $varfalse === FALSE" />
-<f:if condition="{vararray1} == {vararray1}" then="$vararray1 == $vararray1 === TRUE" />
-<f:if condition="('thisstring' != 'thatstring')" then="'thisstring' != 'thatstring' === TRUE" />
-<f:if condition="'somestring' || ('thisstring' != 'thatstring')" then="'somestring' || 'thisstring' != 'thatstring' === TRUE" />
+<f:if condition="0 || 1 && 0" else="0 || 1 and 0 === FALSE" />
+<f:if condition="0 || 1 && 1" then="0 || 1 and 1 === TRUE" />
+<f:if condition="{varfalse}" else="varfalse === FALSE" />
+<f:if condition="{vartrue}" then="vartrue === TRUE" />
+<f:if condition="{vararray1} == {vararray2}" else="vararray1 == vararray2 === FALSE" />
+<f:if condition="({vararray1} == {vararray1}) && {vartrue}" then="(vararray1 == vararray1) and vartrue === TRUE" />
+<f:if condition="{varfalse} == {varfalse}" then="varfalse == varfalse === TRUE" />
+<f:if condition="{varfalse} != {varfalse}" else="varfalse != varfalse === FALSE" />
+<f:if condition="{vararray1} == {vararray1}" then="vararray1 == vararray1 === TRUE" />
+<f:if condition="('thisstring' != 'thatstring')" then="thisstring != thatstring === TRUE" />
+<f:if condition="'somestring' || ('thisstring' != 'thatstring')" then="somestring || thisstring != thatstring === TRUE" />
 
 </f:section>

@@ -524,7 +524,7 @@ class TemplateParserTest extends UnitTestCase
     /**
      * @test
      */
-    public function buildArgumentObjectTreeBuildsObjectTreeForComlexString()
+    public function buildArgumentObjectTreeBuildsObjectTreeForComplexString()
     {
         $objectTree = $this->getMock(ParsingState::class);
         $objectTree->expects($this->once())->method('getRootNode')->will($this->returnValue('theRootNode'));

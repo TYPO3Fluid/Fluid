@@ -44,4 +44,19 @@ interface NodeInterface
      * @return mixed Evaluated node
      */
     public function evaluate(RenderingContextInterface $renderingContext);
+
+    /**
+     * Specifies, if this node's output should be escaped
+     *
+     * @return bool
+     */
+    public function isEscapeOutputEnabled();
+
+    /**
+     * Enable or disable output escaping
+     *
+     * @param bool $escapeOutput
+     */
+    public function setEscapeOutput($escapeOutput);
+
 }

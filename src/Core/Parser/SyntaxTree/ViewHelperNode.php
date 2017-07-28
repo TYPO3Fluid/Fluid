@@ -7,7 +7,9 @@ namespace TYPO3Fluid\Fluid\Core\Parser\SyntaxTree;
  */
 
 use TYPO3Fluid\Fluid\Core\Parser\Exception;
+use TYPO3Fluid\Fluid\Core\Parser\InterceptorInterface;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
+use TYPO3Fluid\Fluid\Core\Parser\TemplateParser;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperInterface;
@@ -44,6 +46,11 @@ class ViewHelperNode extends AbstractNode
     protected $pointerTemplateCode = null;
 
     /**
+     * @var ParsingState
+     */
+    protected $parsingState;
+
+    /**
      * Constructor.
      *
      * @param RenderingContextInterface $renderingContext a RenderingContext, provided by invoker
@@ -52,8 +59,14 @@ class ViewHelperNode extends AbstractNode
      * @param NodeInterface[] $arguments Arguments of view helper - each value is a RootNode.
      * @param ParsingState $state
      */
-    public function __construct(RenderingContextInterface $renderingContext, $namespace, $identifier, array $arguments, ParsingState $state)
-    {
+    public function __construct(
+        RenderingContextInterface $renderingContext,
+        $namespace,
+        $identifier,
+        array $arguments,
+        ParsingState $state
+    ) {
+        $this->parsingState = $state;
         $resolver = $renderingContext->getViewHelperResolver();
         $this->arguments = $arguments;
         $this->viewHelperClassName = $resolver->resolveViewHelperClassName($namespace, $identifier);
@@ -165,8 +178,30 @@ class ViewHelperNode extends AbstractNode
         /** @var $argumentDefinition ArgumentDefinition */
         foreach ($argumentDefinitions as $argumentName => $argumentDefinition) {
             if (($argumentDefinition->getType() === 'boolean' || $argumentDefinition->getType() === 'bool')
-                 && isset($argumentsObjectTree[$argumentName])) {
+                && isset($argumentsObjectTree[$argumentName])
+            ) {
                 $argumentsObjectTree[$argumentName] = new BooleanNode($argumentsObjectTree[$argumentName]);
+            }
+        }
+    }
+
+    /**
+     * Call interceptors for viewHelper arguments
+     *
+     * @param TemplateParser $templateParser
+     * @return void
+     */
+    public function callArgumentInterceptors(TemplateParser $templateParser)
+    {
+        foreach ($this->argumentDefinitions as $argumentName => $argumentDefinition) {
+            /** @var ArgumentDefinition $argumentDefinition */
+            if (isset($this->arguments[$argumentName]) && $this->arguments[$argumentName] instanceof NodeInterface) {
+                $this->arguments[$argumentName]->setEscapeOutput($argumentDefinition->isEscaped());
+                $templateParser->callInterceptor(
+                    $this->arguments[$argumentName],
+                    InterceptorInterface::INTERCEPT_VIEWHELPER_ARGUMENT,
+                    $this->parsingState
+                );
             }
         }
     }

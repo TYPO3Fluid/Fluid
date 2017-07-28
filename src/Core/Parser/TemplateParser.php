@@ -375,6 +375,7 @@ class TemplateParser
 
         $this->callInterceptor($currentViewHelperNode, InterceptorInterface::INTERCEPT_OPENING_VIEWHELPER, $state);
         $viewHelper = $currentViewHelperNode->getUninitializedViewHelper();
+        $currentViewHelperNode->callArgumentInterceptors($this);
         $viewHelper::postParseEvent($currentViewHelperNode, $argumentsObjectTree, $state->getVariableContainer());
         $state->pushNodeToStack($currentViewHelperNode);
 
@@ -480,11 +481,12 @@ class TemplateParser
      * @param ParsingState $state the parsing state
      * @return void
      */
-    protected function callInterceptor(NodeInterface & $node, $interceptionPoint, ParsingState $state)
+    public function callInterceptor(NodeInterface & $node, $interceptionPoint, ParsingState $state)
     {
         if ($this->configuration === null) {
-            return;
+            return $node;
         }
+        
         if ($this->escapingEnabled) {
             /** @var $interceptor InterceptorInterface */
             foreach ($this->configuration->getEscapingInterceptors($interceptionPoint) as $interceptor) {
@@ -542,8 +544,11 @@ class TemplateParser
             }
             return new TextNode($argumentString);
         }
+        $escapingEnabledBackup = $this->escapingEnabled;
+        $this->escapingEnabled = false;
         $splitArgument = $this->splitTemplateAtDynamicTags($argumentString);
         $rootNode = $this->buildObjectTree($splitArgument, self::CONTEXT_INSIDE_VIEWHELPER_ARGUMENTS)->getRootNode();
+        $this->escapingEnabled = $escapingEnabledBackup;
         return $rootNode;
     }
 

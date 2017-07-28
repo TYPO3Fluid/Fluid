@@ -23,6 +23,11 @@ abstract class AbstractNode implements NodeInterface
     protected $childNodes = [];
 
     /**
+     * @var boolean
+     */
+    protected $escapeOutput = false;
+
+    /**
      * Evaluate all child nodes and return the evaluated results.
      *
      * @param RenderingContextInterface $renderingContext
@@ -61,6 +66,9 @@ abstract class AbstractNode implements NodeInterface
             }
             $output = (string) $output;
         }
+        if ($cast && is_array($output)) {
+            $output = 'Array';
+        }
         return $output;
     }
 
@@ -85,4 +93,23 @@ abstract class AbstractNode implements NodeInterface
     {
         $this->childNodes[] = $childNode;
     }
+
+    /**
+     * Specifies, if this node's output should be escaped
+     *
+     * @return bool
+     */
+    public function isEscapeOutputEnabled()
+    {
+        return $this->escapeOutput;
+    }
+
+    /**
+     * @param bool $escapeOutput
+     */
+    public function setEscapeOutput($escapeOutput)
+    {
+        $this->escapeOutput = $escapeOutput;
+    }
+
 }

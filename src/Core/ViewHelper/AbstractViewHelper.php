@@ -173,6 +173,25 @@ abstract class AbstractViewHelper implements ViewHelperInterface
     }
 
     /**
+     * Register a new argument. Call this method from your ViewHelper subclass
+     * inside the initializeArguments() method.
+     *
+     * @param string $name Name of the argument
+     * @param string $type Type of the argument
+     * @return ArgumentDefinition $this, to allow chaining.
+     * @throws Exception
+     * @api
+     */
+    protected function createArgument($name, $type)
+    {
+        if (array_key_exists($name, $this->argumentDefinitions)) {
+            throw new Exception('Argument "' . $name . '" has already been defined, thus it should not be defined again.', 1253036401);
+        }
+        $this->argumentDefinitions[$name] = new ArgumentDefinition($name, $type);
+        return $this->argumentDefinitions[$name];
+    }
+
+    /**
      * Overrides a registered argument. Call this method from your ViewHelper subclass
      * inside the initializeArguments() method if you want to override a previously registered argument.
      * @see registerArgument()

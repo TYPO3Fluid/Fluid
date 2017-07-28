@@ -52,6 +52,10 @@ class Escape implements InterceptorInterface
                 $this->childrenEscapingEnabled = false;
                 $this->viewHelperNodesWhichDisableTheInterceptor[] = $node;
             }
+        } elseif ($interceptorPosition === InterceptorInterface::INTERCEPT_VIEWHELPER_ARGUMENT) {
+            if ($node->isEscapeOutputEnabled() && $this->childrenEscapingEnabled) {
+                $node = new EscapingNode($node);
+            }
         } elseif ($interceptorPosition === InterceptorInterface::INTERCEPT_CLOSING_VIEWHELPER) {
             if (end($this->viewHelperNodesWhichDisableTheInterceptor) === $node) {
                 array_pop($this->viewHelperNodesWhichDisableTheInterceptor);
@@ -78,6 +82,7 @@ class Escape implements InterceptorInterface
     {
         return [
             InterceptorInterface::INTERCEPT_OPENING_VIEWHELPER,
+            InterceptorInterface::INTERCEPT_VIEWHELPER_ARGUMENT,
             InterceptorInterface::INTERCEPT_CLOSING_VIEWHELPER,
             InterceptorInterface::INTERCEPT_OBJECTACCESSOR
         ];
