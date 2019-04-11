@@ -95,11 +95,31 @@ class ViewHelperResolverTest extends UnitTestCase
     /**
      * @test
      */
+    public function testResolveViewHelperClassNameSupportsDirectDottedNamespace()
+    {
+        $resolver = $this->getAccessibleMock(ViewHelperResolver::class, ['dummy']);
+        $result = $resolver->_call('resolveViewHelperName', 'TYPO3Fluid.Fluid', 'render');
+        $this->assertEquals('TYPO3Fluid\\Fluid\\ViewHelpers\\RenderViewHelper', $result);
+    }
+
+    /**
+     * @test
+     */
     public function testResolveViewHelperClassNameTrimsBackslashSuffixFromNamespace()
     {
         $resolver = $this->getAccessibleMock(ViewHelperResolver::class, ['dummy']);
         $resolver->_set('namespaces', ['f' => ['TYPO3Fluid\\Fluid\\ViewHelpers\\']]);
         $result = $resolver->_call('resolveViewHelperName', 'f', 'render');
+        $this->assertEquals('TYPO3Fluid\\Fluid\\ViewHelpers\\RenderViewHelper', $result);
+    }
+
+    /**
+     * @test
+     */
+    public function testResolveViewHelperClassNameSupportsVendorAndPackageNameAsNamespace()
+    {
+        $resolver = $this->getAccessibleMock(ViewHelperResolver::class, ['dummy']);
+        $result = $resolver->_call('resolveViewHelperName', 'TYPO3Fluid.Fluid', 'render');
         $this->assertEquals('TYPO3Fluid\\Fluid\\ViewHelpers\\RenderViewHelper', $result);
     }
 
@@ -255,6 +275,7 @@ class ViewHelperResolverTest extends UnitTestCase
             [['foo' => ['test']], 'foo', true],
             [['foo' => ['test']], 'foobar', false],
             [['foo*' => null], 'foo', false],
+            [[], 'Vendor.Namespace', true],
         ];
     }
 

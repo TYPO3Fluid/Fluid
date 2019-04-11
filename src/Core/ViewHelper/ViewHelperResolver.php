@@ -173,6 +173,10 @@ class ViewHelperResolver
      */
     public function isNamespaceValid($namespaceIdentifier)
     {
+        if (strpos($namespaceIdentifier, '.')) {
+            return true;
+        }
+
         if (!array_key_exists($namespaceIdentifier, $this->namespaces)) {
             return false;
         }
@@ -245,18 +249,8 @@ class ViewHelperResolver
     public function resolveViewHelperClassName($namespaceIdentifier, $methodIdentifier)
     {
         if (!isset($this->resolvedViewHelperClassNames[$namespaceIdentifier][$methodIdentifier])) {
-            $resolvedViewHelperClassName = $this->resolveViewHelperName($namespaceIdentifier, $methodIdentifier);
-            $actualViewHelperClassName = implode('\\', array_map('ucfirst', explode('.', $resolvedViewHelperClassName)));
-            if (false === class_exists($actualViewHelperClassName) || $actualViewHelperClassName === false) {
-                throw new ParserException(sprintf(
-                    'The ViewHelper "<%s:%s>" could not be resolved.' . chr(10) .
-                    'Based on your spelling, the system would load the class "%s", however this class does not exist.',
-                    $namespaceIdentifier,
-                    $methodIdentifier,
-                    $resolvedViewHelperClassName
-                ), 1407060572);
-            }
-            $this->resolvedViewHelperClassNames[$namespaceIdentifier][$methodIdentifier] = $actualViewHelperClassName;
+            $this->resolvedViewHelperClassNames[$namespaceIdentifier][$methodIdentifier] =
+                $this->resolveViewHelperName($namespaceIdentifier, $methodIdentifier);
         }
         return $this->resolvedViewHelperClassNames[$namespaceIdentifier][$methodIdentifier];
     }
@@ -320,13 +314,42 @@ class ViewHelperResolver
         } else {
             $className = ucfirst($explodedViewHelperName[0]);
         }
-        $className .= 'ViewHelper';
+        $classNames = [
+            $className . 'ViewHelper',
+            $className,
+        ];
 
-        $namespaces = (array) $this->namespaces[$namespaceIdentifier];
+        if (array_key_exists($namespaceIdentifier, $this->namespaces)) {
+            $namespaces = (array) $this->namespaces[$namespaceIdentifier];
+        } else {
+            $namespacePrefix = $this->namespaces[$namespaceIdentifier] = str_replace('.', '\\', $namespaceIdentifier);
+            $namespaces = [
+                $namespacePrefix . '\\ViewHelpers',
+                $namespacePrefix,
+            ];
+        }
 
-        do {
-            $name = rtrim(array_pop($namespaces), '\\') . '\\' . $className;
-        } while (!class_exists($name) && count($namespaces));
+        $checked = [];
+        foreach (array_reverse($namespaces) as $namespace) {
+            $namespace = rtrim($namespace, '\\');
+            foreach ($classNames as $className) {
+                $name = $namespace . '\\' . $className;
+                if (class_exists($name) && is_a($name, ViewHelperInterface::class, true)) {
+                    return $name;
+                }
+                $checked[] = $name;
+            }
+        }
+
+        throw new ParserException(
+            sprintf(
+                'The ViewHelper "<%s:%s>" could not be resolved. Fluid checked for "%s" but none of those classes exist.',
+                $namespaceIdentifier,
+                $methodIdentifier,
+                implode(', ', $checked)
+            ),
+            1407060572
+        );
 
         return $name;
     }

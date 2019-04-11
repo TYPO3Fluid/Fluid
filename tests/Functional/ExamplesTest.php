@@ -259,7 +259,7 @@ class ExamplesTest extends BaseTestCase
                     'Section rendering error: Section "DoesNotExist" does not exist. Section rendering is mandatory; "optional" is false.',
                     'ViewHelper error: Undeclared arguments passed to ViewHelper TYPO3Fluid\Fluid\ViewHelpers\IfViewHelper: notregistered. Valid arguments are: then, else, condition - Offending code: <f:if notregistered="1" />',
                     'Parser error: The ViewHelper "<f:invalid>" could not be resolved.',
-                    'Based on your spelling, the system would load the class "TYPO3Fluid\Fluid\ViewHelpers\InvalidViewHelper", however this class does not exist. Offending code: <f:invalid />',
+                    'Fluid checked for "TYPO3Fluid\Fluid\ViewHelpers\InvalidViewHelper, TYPO3Fluid\Fluid\ViewHelpers\Invalid" but none of those classes exist. Offending code: <f:invalid />',
                     'Invalid expression: Invalid target conversion type "invalidtype" specified in casting expression "{foobar as invalidtype}".',
                 ]
             ]
