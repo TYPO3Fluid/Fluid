@@ -4,7 +4,7 @@ The Fluid Syntax
 Fluid has two main syntax formats - the **tag mode** and the **inline/shorthand mode**. The tag mode like the name indicates is
 designed to be used as a pseudo (X)HTML tag and the inline mode is designed to access variables and be placed in for example
 HTML tag attributes without breaking validation. The tag mode is purely for using ViewHelpers (which you can read more about in
-[the documentation about using ViewHelpers](FLUID_VIEWHELPERS.md)). And the inline mode is designed to access variables, use
+[the documentation about using ViewHelpers](viewhelpers.md)). And the inline mode is designed to access variables, use
 special Fluid expressions and use ViewHelpers.
 
 Tag- and inline modes

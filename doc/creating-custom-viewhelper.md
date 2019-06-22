@@ -1,7 +1,7 @@
 Creating ViewHelpers
 ====================
 
-Creating a ViewHelper is extremely simple. First, make sure you read the [chapter about using ViewHelpers](FLUID_VIEWHELPERS.md)
+Creating a ViewHelper is extremely simple. First, make sure you read the [chapter about using ViewHelpers](viewhelpers.md)
 so you know where ViewHelper class files are expected to be placed in your own package and that you understand how/why you would
 require a custom ViewHelper.
 

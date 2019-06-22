@@ -2,7 +2,7 @@ Creating ExpressionNodes
 ========================
 
 To understand what an ExpressionNode is and which cases can be solved by implementing custom ones, first read the
-[chapter about implementing Fluid](FLUID_IMPLEMENTATION.md). Once you grasp what an ExpressionNode is and how it works, a very
+[chapter about implementing Fluid](fluid-internals.md). Once you grasp what an ExpressionNode is and how it works, a very
 brief example is all you need.
 
 First: an ExpressionNode is always one PHP class. Where you place it is completely up to you - but to have the class actually be
