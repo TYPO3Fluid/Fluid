@@ -51,6 +51,7 @@ class TernaryExpressionNodeTest extends UnitTestCase
             ['{(true || (\'foo\' == \'bar\')) ? \'yes\' : \'no\'}', true],
             ['{(foo || 1 && 1 && !(false) || (1 % 2) || (1 > 0) || (\'foo\' == \'bar\')) ? \'yes\' : \'no\'}', true],
             ['{{f:if(condition: 1, then: 1, else: 0)} ? \'yes\' : \'no\'}', true],
+            ['{zeroString ? zeroString : 123}', true],
         ];
     }
 
@@ -77,6 +78,8 @@ class TernaryExpressionNodeTest extends UnitTestCase
         return [
             ['1 ? 2 : 3', [], 2],
             ['0 ? 2 : 3', [], 3],
+            ['zeroString ? zeroString : 123', ['zeroString' => '0'], 123],
+            ['nested.zeroString ? nested.zeroString : 123', ['nested' => ['zeroString' => '0']], 123],
         ];
     }
 }

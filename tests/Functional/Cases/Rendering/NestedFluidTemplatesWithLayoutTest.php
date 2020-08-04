@@ -20,17 +20,6 @@ class NestedFluidTemplatesWithLayoutTest extends BaseFunctionalTestCase
     ];
 
     /**
-     * If your test case requires a cache, override this
-     * method and return an instance.
-     *
-     * @return FluidCacheInterface
-     */
-    protected function getCache()
-    {
-        return new SimpleFileCache(sys_get_temp_dir());
-    }
-
-    /**
      * @return array
      */
     public function getTemplateCodeFixturesAndExpectations()
@@ -53,21 +42,21 @@ class NestedFluidTemplatesWithLayoutTest extends BaseFunctionalTestCase
      *
      * @param string|resource $source
      * @param array $variables
-     * @param array $expected
-     * @param array $notExpected
+     * @param array|string $expected
+     * @param array|string|null $notExpected
      * @param string|NULL $expectedException
      * @param boolean $withCache
      * @test
      * @dataProvider getTemplateCodeFixturesAndExpectations
      */
-    public function testTemplateCodeFixture($source, array $variables, array $expected, array $notExpected, $expectedException = null, $withCache = false)
+    public function testTemplateCodeFixture($source, array $variables, $expected, $notExpected = null, $expectedException = null, $withCache = false)
     {
-        $view = $this->getView();
+        $view = $this->getView($withCache);
         $view->getRenderingContext()->getTemplatePaths()->setTemplateSource($source);
         $view->getRenderingContext()->getTemplatePaths()->setLayoutRootPaths([__DIR__ . '/../../Fixtures/Layouts/']);
         $view->getRenderingContext()->getViewHelperResolver()->addNamespace('test', 'TYPO3Fluid\\Fluid\\Tests\\Functional\\Fixtures\\ViewHelpers');
 
-        $innerView = $this->getView();
+        $innerView = $this->getView($withCache);
         $innerView->getRenderingContext()->getTemplatePaths()->setTemplateSource($source);
         $innerView->getRenderingContext()->getTemplatePaths()->setLayoutRootPaths([__DIR__ . '/../../Fixtures/LayoutsOverride/Layouts/']);
         $innerView->getRenderingContext()->getViewHelperResolver()->addNamespace('test', 'TYPO3Fluid\\Fluid\\Tests\\Functional\\Fixtures\\ViewHelpers');

@@ -2,6 +2,7 @@
 namespace TYPO3Fluid\Fluid\Tests\Functional;
 
 use TYPO3Fluid\Fluid\Core\Cache\FluidCacheInterface;
+use TYPO3Fluid\Fluid\Core\Cache\SimpleFileCache;
 use TYPO3Fluid\Fluid\Tests\UnitTestCase;
 use TYPO3Fluid\Fluid\View\TemplateView;
 use TYPO3Fluid\Fluid\View\ViewInterface;
@@ -20,7 +21,7 @@ abstract class BaseConditionalFunctionalTestCase extends UnitTestCase
      */
     protected function getCache()
     {
-        return null;
+        return new SimpleFileCache(sys_get_temp_dir());
     }
 
     /**
@@ -116,7 +117,7 @@ abstract class BaseConditionalFunctionalTestCase extends UnitTestCase
      * return a valid cache.
      *
      * @param string|resource $sourceOrStream
-     * @param boolean $expected
+     * @param boolean $expectation
      * @param array $variables
      * @test
      * @dataProvider getTemplateCodeFixturesAndExpectations
@@ -124,7 +125,8 @@ abstract class BaseConditionalFunctionalTestCase extends UnitTestCase
     public function testTemplateCodeFixtureWithCache($sourceOrStream, $expectation, array $variables = [])
     {
         if ($this->getCache()) {
-            $this->testTemplateCodeFixture($sourceOrStream, $variables, $expected, $notExpected, true);
+            $this->testTemplateCodeFixture($sourceOrStream, $expectation, $variables, true);
+            $this->testTemplateCodeFixture($sourceOrStream, $expectation, $variables, true);
         } else {
             $this->markTestSkipped('Cache-specific test skipped');
         }

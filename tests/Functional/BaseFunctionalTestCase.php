@@ -1,7 +1,9 @@
 <?php
 namespace TYPO3Fluid\Fluid\Tests\Functional;
 
+use org\bovigo\vfs\vfsStream;
 use TYPO3Fluid\Fluid\Core\Cache\FluidCacheInterface;
+use TYPO3Fluid\Fluid\Core\Cache\SimpleFileCache;
 use TYPO3Fluid\Fluid\Tests\UnitTestCase;
 use TYPO3Fluid\Fluid\View\TemplateView;
 use TYPO3Fluid\Fluid\View\ViewInterface;
@@ -20,7 +22,7 @@ abstract class BaseFunctionalTestCase extends UnitTestCase
      */
     protected function getCache()
     {
-        return null;
+        return new SimpleFileCache(vfsStream::setup()->url());
     }
 
     /**
@@ -86,19 +88,19 @@ abstract class BaseFunctionalTestCase extends UnitTestCase
      *
      * @param string|resource $source
      * @param array $variables
-     * @param array $expected
-     * @param array $notExpected
+     * @param array|string $expected
+     * @param array|string|null $notExpected
      * @param string|NULL $expectedException
      * @param boolean $withCache
      * @test
      * @dataProvider getTemplateCodeFixturesAndExpectations
      */
-    public function testTemplateCodeFixture($source, array $variables, array $expected, array $notExpected, $expectedException = null, $withCache = false)
+    public function testTemplateCodeFixture($source, array $variables, $expected, $notExpected = null, $expectedException = null, $withCache = false)
     {
         if (!empty($expectedException)) {
             $this->setExpectedException($expectedException);
         }
-        $view = $this->getView(false);
+        $view = $this->getView($withCache);
         $view->getRenderingContext()->getTemplatePaths()->setTemplateSource($source);
         $view->getRenderingContext()->getViewHelperResolver()->addNamespace('test', 'TYPO3Fluid\\Fluid\\Tests\\Functional\\Fixtures\\ViewHelpers');
         $view->assignMultiple($variables);
@@ -107,19 +109,27 @@ abstract class BaseFunctionalTestCase extends UnitTestCase
         if (empty($expected) && empty($notExpected)) {
             $this->fail('Test performs no assertions!');
         }
-        foreach ($expected as $expectedValue) {
-            if (is_string($expectedValue) === true) {
-                $this->assertStringContainsString($expectedValue, $output);
-            } else {
-                $this->assertEquals($expectedValue, $output);
+        if (is_array($expected)) {
+            foreach ($expected as $expectedValue) {
+                if (is_string($expectedValue) === true) {
+                    $this->assertStringContainsString($expectedValue, $output);
+                } else {
+                    $this->assertEquals($expectedValue, $output);
+                }
             }
+        } else {
+            $this->assertEquals($expected, $output);
         }
-        foreach ($notExpected as $notExpectedValue) {
-            if (is_string($notExpectedValue) === true) {
-                $this->assertStringNotContainsString($notExpectedValue, $output);
-            } else {
-                $this->assertNotEquals($notExpectedValue, $output);
+        if (is_array($notExpected)) {
+            foreach ($notExpected as $notExpectedValue) {
+                if (is_string($notExpectedValue) === true) {
+                    $this->assertStringNotContainsString($notExpectedValue, $output);
+                } else {
+                    $this->assertNotEquals($notExpectedValue, $output);
+                }
             }
+        } elseif (is_string($notExpected)) {
+            $this->assertStringNotContainsString($notExpected, $output);
         }
     }
 
@@ -135,15 +145,16 @@ abstract class BaseFunctionalTestCase extends UnitTestCase
      *
      * @param string|resource $sourceOrStream
      * @param array $variables
-     * @param array $expected
-     * @param array $notExpected
+     * @param array|string $expected
+     * @param array|string|null $notExpected
      * @param string|NULL $expectedException
      * @test
      * @dataProvider getTemplateCodeFixturesAndExpectations
      */
-    public function testTemplateCodeFixtureWithCache($sourceOrStream, array $variables, array $expected, array $notExpected, $expectedException = null)
+    public function testTemplateCodeFixtureWithCache($sourceOrStream, array $variables, $expected, $notExpected = null, $expectedException = null)
     {
         if ($this->getCache()) {
+            $this->getCache()->flush();
             $this->testTemplateCodeFixture($sourceOrStream, $variables, $expected, $notExpected, $expectedException, true);
             $this->testTemplateCodeFixture($sourceOrStream, $variables, $expected, $notExpected, $expectedException, true);
         } else {
