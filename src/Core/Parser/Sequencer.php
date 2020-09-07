@@ -608,7 +608,7 @@ class Sequencer
                         // Ignore one ending additional curly brace. Subtracted in the BYTE_INLINE_END case below.
                         // The expression in this case looks like {{inline}.....} and we capture the curlies.
                         $potentialAccessor .= $captured;
-                    } elseif ($allowArray || $isArray) {
+                    } elseif ($isArray) {
                         $isArray = true;
                         $captured = $key ?? $captured ?? $potentialAccessor;
                         // This is a sub-syntax following a colon - meaning it is an array.

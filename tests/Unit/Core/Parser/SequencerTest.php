@@ -269,6 +269,12 @@ class SequencerTest extends UnitTestCase
                 false,
                 (new EntryNode())->addChild((new ObjectAccessorNode())->addChild(new TextNode('foo.'))->addChild(new ObjectAccessorNode('bar'))),
             ],
+            'accessor with dynamic part with dot in middle in inline in root context' => [
+                '{foo.{sub.bar}.baz}',
+                $context,
+                false,
+                (new EntryNode())->addChild((new ObjectAccessorNode())->addChild(new TextNode('foo.'))->addChild(new ObjectAccessorNode('sub.bar'))->addChild(new TextNode('.baz'))),
+            ],
             'simple inline with text before in root context' => [
                 'before {foo}',
                 $context,
@@ -602,6 +608,12 @@ class SequencerTest extends UnitTestCase
                 $context,
                 false,
                 (new EntryNode())->addChild($this->createViewHelper($context, CViewHelper::class, ['s' => new ObjectAccessorNode('string')])),
+            ],
+            'self-closed active tag with object accessor with sub-variable at end in string argument' => [
+                '<f:c s="{string.{sub}}" />',
+                $context,
+                false,
+                (new EntryNode())->addChild($this->createViewHelper($context, CViewHelper::class, ['s' => (new ObjectAccessorNode())->addChild(new TextNode('string.'))->addChild(new ObjectAccessorNode('sub'))])),
             ],
             'self-closed active tag with object accessor string argument with string before accessor in string argument' => [
                 '<f:c s="before {string}" />',
