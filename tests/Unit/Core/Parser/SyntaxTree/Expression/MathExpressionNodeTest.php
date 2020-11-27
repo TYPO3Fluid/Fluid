@@ -39,16 +39,21 @@ class MathExpressionNodeTest extends UnitTestCase
     public function getEvaluateExpressionTestValues()
     {
         return [
-            ['1 gabbagabbahey 1', [], 0],
-            ['1 + 1', [], 2],
-            ['2 - 1', [], 1],
-            ['2 % 4', [], 2],
-            ['2 * 4', [], 8],
-            ['4 / 2', [], 2],
-            ['4 ^ 2', [], 16],
-            ['a + 1', ['a' => 1], 2],
-            ['1 + b', ['b' => 1], 2],
-            ['a + b', ['a' => 1, 'b' => 1], 2],
+            'Invalid operator returns zero' => ['1 gabbagabbahey 1', [], 0],
+            'Simple addition' => ['1 + 1', [], 2],
+            'Chained addition' => ['1 + 1 + 1', [], 3],
+            'Multiplication before addition' => ['1 + 1 * 2', [], 4],
+            'Subtraction' => ['2 - 1', [], 1],
+            'Modulo' => ['2 % 4', [], 2],
+            'Multiplication' => ['2 * 4', [], 8],
+            'Division' => ['4 / 2', [], 2],
+            'Exponentiation' => ['4 ^ 2', [], 16],
+            'Simple variable (first) addition' => ['a + 1', ['a' => 1], 2],
+            'Simple variable (last) addition' => ['1 + b', ['b' => 1], 2],
+            'Multiple variable addition' => ['a + a + 1', ['a' => 1], 3],
+            'Variable only addition' => ['a + b', ['a' => 1, 'b' => 1], 2],
+            'Addition with boolean "true"' => ['a + 1', ['a' => true], 2],
+            'Addition with boolean "false"' => ['a + 1', ['a' => false], 1],
         ];
     }
 }
