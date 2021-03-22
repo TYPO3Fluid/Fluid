@@ -168,22 +168,11 @@ class NodeConverter
                 $this->templateCompiler
             );
 
-            $arguments = $node->getArgumentDefinitions();
-            $argumentInitializationCode = sprintf('%s = array();', $argumentsVariableName) . chr(10);
-            foreach ($arguments as $argumentName => $argumentDefinition) {
-                if (!isset($alreadyBuiltArguments[$argumentName])) {
-                    $argumentInitializationCode .= sprintf(
-                        '%s[\'%s\'] = %s;%s',
-                        $argumentsVariableName,
-                        $argumentName,
-                        var_export($argumentDefinition->getDefaultValue(), true),
-                        chr(10)
-                    );
-                }
-            }
+            $accumulatedArgumentInitializationCode = '';
+            $argumentInitializationCode = sprintf('%s = [', $argumentsVariableName);
 
-            $alreadyBuiltArguments = [];
-            foreach ($node->getArguments() as $argumentName => $argumentValue) {
+            $arguments = $node->getArguments();
+            foreach ($arguments as $argumentName => $argumentValue) {
                 if ($argumentValue instanceof NodeInterface) {
                     $converted = $this->convert($argumentValue);
                 } else {
@@ -192,15 +181,32 @@ class NodeConverter
                         'execution' => $argumentValue
                     ];
                 }
-                $argumentInitializationCode .= $converted['initialization'];
+                $accumulatedArgumentInitializationCode .= $converted['initialization'];
                 $argumentInitializationCode .= sprintf(
-                    '%s[\'%s\'] = %s;',
-                    $argumentsVariableName,
+                    '\'%s\' => %s',
                     $argumentName,
                     $converted['execution']
-                ) . chr(10);
-                $alreadyBuiltArguments[$argumentName] = true;
+                );
+
+                $argumentInitializationCode .= ', ';
             }
+
+            foreach ($node->getArgumentDefinitions() as $argumentName => $argumentDefinition) {
+                if (!isset($arguments[$argumentName])) {
+                    $defaultValue = $argumentDefinition->getDefaultValue();
+                    $argumentInitializationCode .= sprintf(
+                        '\'%s\' => %s',
+                        $argumentName,
+                        is_array($defaultValue) && empty($defaultValue) ? '[]' : var_export($defaultValue, true)
+                    );
+                    $argumentInitializationCode .= ', ';
+                }
+            }
+
+            $argumentInitializationCode = rtrim($argumentInitializationCode, ', ');
+            $argumentInitializationCode .= '];' . PHP_EOL;
+
+            $initializationPhpCode = '// Rendering ViewHelper ' . $node->getViewHelperClassName() . chr(10);
 
             // Build up closure which renders the child nodes
             $initializationPhpCode .= sprintf(
@@ -209,7 +215,7 @@ class NodeConverter
                 $this->templateCompiler->wrapChildNodesInClosure($node)
             ) . chr(10);
 
-            $initializationPhpCode .= $argumentInitializationCode . $viewHelperInitializationPhpCode;
+            $initializationPhpCode .= $accumulatedArgumentInitializationCode . PHP_EOL . $argumentInitializationCode . $viewHelperInitializationPhpCode;
         } catch (StopCompilingChildrenException $stopCompilingChildrenException) {
             $convertedViewHelperExecutionCode = '\'' . str_replace("'", "\'", $stopCompilingChildrenException->getReplacementString()) . '\'';
         }
@@ -275,41 +281,45 @@ class NodeConverter
      */
     protected function convertArrayNode(ArrayNode $node)
     {
-        $initializationPhpCode = '// Rendering Array' . chr(10);
         $arrayVariableName = $this->variableName('array');
 
-        $initializationPhpCode .= sprintf('%s = array();', $arrayVariableName) . chr(10);
+        $accumulatedInitializationPhpCode = '';
+        $initializationPhpCode = sprintf('%s = [', $arrayVariableName);
 
         foreach ($node->getInternalArray() as $key => $value) {
             if ($value instanceof NodeInterface) {
                 $converted = $this->convert($value);
-                $initializationPhpCode .= $converted['initialization'];
+                if (!empty($converted['initialization'])) {
+                    $accumulatedInitializationPhpCode .= $converted['initialization'];
+                }
                 $initializationPhpCode .= sprintf(
-                    '%s[\'%s\'] = %s;',
-                    $arrayVariableName,
+                    '\'%s\' => %s',
                     $key,
                     $converted['execution']
-                ) . chr(10);
+                );
             } elseif (is_numeric($value)) {
                 // this case might happen for simple values
                 $initializationPhpCode .= sprintf(
-                    '%s[\'%s\'] = %s;',
-                    $arrayVariableName,
+                    '\'%s\' => %s',
                     $key,
                     $value
-                ) . chr(10);
+                );
             } else {
                 // this case might happen for simple values
                 $initializationPhpCode .= sprintf(
-                    '%s[\'%s\'] = \'%s\';',
-                    $arrayVariableName,
+                    '\'%s\' => \'%s\'',
                     $key,
                     $this->escapeTextForUseInSingleQuotes($value)
-                ) . chr(10);
+                );
             }
+            $initializationPhpCode .= ', ';
         }
+
+        $initializationPhpCode = rtrim($initializationPhpCode, ', ');
+        $initializationPhpCode .= '];' . PHP_EOL;
+
         return [
-            'initialization' => $initializationPhpCode,
+            'initialization' => $accumulatedInitializationPhpCode . PHP_EOL . $initializationPhpCode,
             'execution' => $arrayVariableName
         ];
     }
