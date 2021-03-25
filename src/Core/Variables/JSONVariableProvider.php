@@ -96,7 +96,7 @@ class JSONVariableProvider extends StandardVariableProvider implements VariableP
             } else {
                 $source = $this->source;
             }
-            $this->variables = json_decode($source, defined('JSON_OBJECT_AS_ARRAY') ? JSON_OBJECT_AS_ARRAY : 1);
+            parent::setSource(json_decode($source, defined('JSON_OBJECT_AS_ARRAY') ? JSON_OBJECT_AS_ARRAY : 1));
             $this->lastLoaded = time();
         }
     }

@@ -31,7 +31,7 @@ class StandardVariableProvider implements VariableProviderInterface
      */
     public function __construct(array $variables = [])
     {
-        $this->variables = $variables;
+        $this->setSource($variables);
     }
 
     /**
@@ -57,7 +57,14 @@ class StandardVariableProvider implements VariableProviderInterface
      */
     public function setSource($source)
     {
-        $this->variables = $source;
+        // Rather than assign $this->variables = $source we iterate in order to make sure that
+        // the logic within add() which is capable of storing nested variables, is used. In other
+        // words: $source can contain dotted-path keys which become a nested array structure or
+        // become overrides for values on objects.
+        $this->variables = [];
+        foreach ($source as $key => $value) {
+            $this->add($key, $value);
+        }
     }
 
     /**
@@ -90,7 +97,64 @@ class StandardVariableProvider implements VariableProviderInterface
      */
     public function add($identifier, $value)
     {
-        $this->variables[$identifier] = $value;
+        if (strpos($identifier, '.') === false) {
+            $this->variables[$identifier] = $value;
+        } else {
+            $parts = explode('.', $identifier);
+            $root = array_shift($parts);
+            if (!isset($this->variables[$root])) {
+                $this->variables[$root] = [];
+            }
+            $subject = &$this->variables[$root];
+            $propertyName = array_pop($parts);
+            $iterated = [$root];
+
+            $this->assertSubjectIsArrayOrObject($subject, $iterated, $identifier);
+
+            foreach ($parts as $part) {
+                $iterated[] = $part;
+                if (is_array($subject) || $subject instanceof \ArrayAccess || $subject instanceof \ArrayObject) {
+                    if (!isset($subject[$part])) {
+                        $subject[$part] = [];
+                    }
+                    $subject = &$subject[$part];
+                } elseif (is_object($subject)) {
+                    $subject = $this->extractSingleValue($subject, $part);
+                } else {
+                    $subject = null;
+                }
+
+                $this->assertSubjectIsArrayOrObject($subject, $iterated, $identifier);
+            }
+
+            // Assign the value on the $subject that is now a reference (either to somewhere in $this->variables
+            // or itself an object that is by nature a reference).
+            if (is_array($subject) || $subject instanceof \ArrayAccess || $subject instanceof \ArrayObject) {
+                $subject[$propertyName] = $value;
+            } elseif (is_object($subject)) {
+                $setterMethodName = 'set' . ucfirst($propertyName);
+                if (method_exists($subject, $setterMethodName)) {
+                    $subject->$setterMethodName($value);
+                } else {
+                    $subject->$propertyName = $value;
+                }
+            }
+        }
+    }
+
+    protected function assertSubjectIsArrayOrObject($subject, array $segmentsUntilSubject, $originalPathToSet)
+    {
+        if (!(is_array($subject) || is_object($subject))) {
+            throw new \UnexpectedValueException(
+                sprintf(
+                    'Variable in path "%s" is scalar and is not the last segment in the full path "%s". ' .
+                    'Refusing to coerce value of parent segment - cannot assign variable.',
+                    implode('.', $segmentsUntilSubject),
+                    $originalPathToSet
+                ),
+                1546878798
+            );
+        }
     }
 
     /**
@@ -310,7 +374,7 @@ class StandardVariableProvider implements VariableProviderInterface
      * @param string $accessor
      * @return mixed
      */
-    protected function extractWithAccessor($subject, $propertyName, $accessor)
+    protected function extractWithAccessor(&$subject, $propertyName, $accessor)
     {
         if ($accessor === self::ACCESSOR_ARRAY && is_array($subject) && array_key_exists($propertyName, $subject)
             || $subject instanceof \ArrayAccess && $subject->offsetExists($propertyName)

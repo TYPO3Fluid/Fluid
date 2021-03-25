@@ -255,7 +255,7 @@ class StandardVariableProviderTest extends UnitTestCase
      * @param string $accessor
      * @param mixed $expected
      * @test
-     * @dataProvider getExtractRedectAccessorTestValues
+     * @dataProvider getExtractRedetectsAccessorTestValues
      */
     public function testExtractRedetectsAccessorIfUnusableAccessorPassed($subject, $path, $accessor, $expected)
     {
@@ -267,7 +267,7 @@ class StandardVariableProviderTest extends UnitTestCase
     /**
      * @return array
      */
-    public function getExtractRedectAccessorTestValues()
+    public function getExtractRedetectsAccessorTestValues()
     {
         return [
             [['test' => 'test'], 'test', null, 'test'],
@@ -275,6 +275,70 @@ class StandardVariableProviderTest extends UnitTestCase
             [['test' => 'test'], 'test', StandardVariableProvider::ACCESSOR_PUBLICPROPERTY, 'test'],
             [['test' => 'test'], 'test', StandardVariableProvider::ACCESSOR_GETTER, 'test'],
             [['test' => 'test'], 'test', StandardVariableProvider::ACCESSOR_ASSERTER, 'test'],
+        ];
+    }
+
+    /**
+     * @param array $variables
+     * @param string $path
+     * @param mixed $value
+     * @test
+     * @dataProvider getAddWithDottedPathTestValues
+     */
+    public function testAddWithDottedPath(array $variables, $path, $value)
+    {
+        $subject = new StandardVariableProvider($variables);
+        if ($path !== null) {
+            $subject->add($path, $value);
+            $this->assertSame($value, $subject->getByPath($path));
+        } else {
+            $this->assertSame($value, $subject->getSource());
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getAddWithDottedPathTestValues()
+    {
+        $user = new UserWithoutToString('testuser');
+        return [
+            'Plain string assigned into blank variables array' => [[], 'new.array', 'mystring'],
+            'Plain string assigned into blank variables array with multiple dimensions' => [[], 'new.array.sub', 'mystring'],
+            'Array built from dotted paths in original array' => [['dotted.one' => 1, 'dotted.two' => 2], null, ['dotted' => ['one' => 1, 'two' => 2]]],
+            'Plain string assigned into existing variable' => ['foo' => ['bar' => 'test'], 'foo.bar', 'new'],
+            'Property value assigned on object via setter' => [['parent' => $user], 'parent.name', 'newname'],
+            'Property value assigned on object via public property' => [['parent' => $user], 'parent.newProperty', 'newValue'],
+        ];
+    }
+
+    /**
+     * @param array $variables
+     * @param string $path
+     * @param mixed $value
+     * @test
+     * @dataProvider getAddWithDottedPathThrowsErrorIfSubjectIsScalarTestValues
+     */
+    public function testAddWithDottedPathThrowsErrorIfSubjectIsScalar(array $variables, $path)
+    {
+        $this->setExpectedException(\UnexpectedValueException::class, null, 1546878798);
+        $subject = new StandardVariableProvider($variables);
+        if ($path !== null) {
+            $subject->add($path, 'foo');
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getAddWithDottedPathThrowsErrorIfSubjectIsScalarTestValues()
+    {
+        $user = new UserWithoutToString('testuser');
+        return [
+            'Invalid property on object added after source' => [['user' => $user], 'user.doesnotexist.sub', 'value'],
+            'Invalid property on object added in source' => [['user' => $user, 'user.doesnotexist.sub' => 'value'], null, null],
+            'Scalar property on object used as array/object' => [['user' => $user, 'user.name.sub' => 'value'], null, null],
+            'Scalar property on object used as array/object, additional dimension' => [['user' => $user, 'user.name.sub.moresub' => 'value'], null, null],
         ];
     }
 }
