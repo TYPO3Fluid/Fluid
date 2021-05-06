@@ -3,7 +3,8 @@
 	"description": "The TYPO3 Fluid template rendering engine",
 	"license": ["LGPL-3.0-or-later"],
 	"require": {
-		"php": ">=5.5.0"
+		"php": ">=5.5.0",
+		"ext-json": "*"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^8.1",
