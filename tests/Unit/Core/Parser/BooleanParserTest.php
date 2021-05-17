@@ -41,7 +41,7 @@ class BooleanParserTest extends UnitTestCase
         $this->assertEquals($expected, BooleanNode::convertToBoolean($parser->evaluate($comparison, $variables), $this->renderingContext), 'Expression: ' . $comparison);
 
         $compiledEvaluation = $parser->compile($comparison);
-        $functionName = 'expression_' . md5($comparison . rand(0, 100000));
+        $functionName = 'expression_' . md5($comparison . (function_exists('random_bytes') ? random_bytes(10) : microtime(true)));
         eval('function ' . $functionName . '($context) {return ' . $compiledEvaluation . ';}');
         $this->assertEquals($expected, BooleanNode::convertToBoolean($functionName($variables), $this->renderingContext), 'compiled Expression: ' . $compiledEvaluation);
     }

@@ -107,12 +107,14 @@ class NodeConverter
     protected function convertEscapingNode(EscapingNode $node)
     {
         $configuration = $this->convert($node->getNode());
-        $configuration['execution'] = sprintf(
-            'call_user_func_array( function ($var) { ' .
-            'return (is_string($var) || (is_object($var) && method_exists($var, \'__toString\')) ' .
-            '? htmlspecialchars((string) $var, ENT_QUOTES) : $var); }, [%s])',
-            $configuration['execution']
-        );
+        if (!empty($configuration['execution']) && strtolower($configuration['execution']) !== 'null' && !is_numeric(trim($configuration['execution'], '\'"'))) {
+            $configuration['execution'] = sprintf(
+                'call_user_func_array( function ($var) { ' .
+                'return (is_string($var) || (is_object($var) && method_exists($var, \'__toString\')) ' .
+                '? htmlspecialchars((string) $var, ENT_QUOTES) : $var); }, [%s])',
+                $configuration['execution']
+            );
+        }
         return $configuration;
     }
 
@@ -283,7 +285,9 @@ class NodeConverter
         foreach ($node->getInternalArray() as $key => $value) {
             if ($value instanceof NodeInterface) {
                 $converted = $this->convert($value);
-                $initializationPhpCode .= $converted['initialization'];
+                if (!empty($converted['initialization'])) {
+                    $initializationPhpCode .= $converted['initialization'];
+                }
                 $initializationPhpCode .= sprintf(
                     '%s[\'%s\'] = %s;',
                     $arrayVariableName,
@@ -325,7 +329,7 @@ class NodeConverter
             case 0:
                 return [
                     'initialization' => '',
-                    'execution' => 'NULL'
+                    'execution' => 'NULL',
                 ];
             case 1:
                 $childNode = current($node->getChildNodes());
@@ -339,8 +343,12 @@ class NodeConverter
                 foreach ($node->getChildNodes() as $childNode) {
                     $converted = $this->convert($childNode);
 
-                    $initializationPhpCode .= $converted['initialization'] . chr(10);
-                    $initializationPhpCode .= sprintf('%s .= %s;', $outputVariableName, $converted['execution']) . chr(10);
+                    if (!empty($converted['initialization'])) {
+                        $initializationPhpCode .= $converted['initialization'] . chr(10);
+                    }
+                    if (!empty($converted['execution'])) {
+                        $initializationPhpCode .= sprintf('%s .= %s;', $outputVariableName, $converted['execution']) . chr(10);
+                    }
                 }
 
                 return [
@@ -367,9 +375,36 @@ class NodeConverter
      */
     protected function convertBooleanNode(BooleanNode $node)
     {
-        $stack = $this->convertArrayNode(new ArrayNode($node->getStack()));
-        $initializationPhpCode = '// Rendering Boolean node' . chr(10);
-        $initializationPhpCode .= $stack['initialization'] . chr(10);
+        $booleanStack = $node->getStack();
+
+        // Quick decisions: if there is only one node and it can be determined to be a string/numeric/boolean already
+        // then use it directly.
+        if (count($booleanStack) === 1) {
+            $compiledOnlyNode = $this->convert($booleanStack[0]);
+            // Execution without possible quotation marks, then converted to lowercase for easier comparison.
+            $execution = trim($compiledOnlyNode['execution'], '"\'\\');
+            $lowercaseExecution = strtolower($execution);
+            if ($lowercaseExecution === 'true') {
+                $execution = 'true';
+            } elseif ($lowercaseExecution === 'false' || empty($execution)) {
+                $execution = 'false';
+            } elseif (is_numeric($execution) || is_bool($execution)) {
+                $execution = $execution ? 'true' : 'false';
+            } else {
+                $execution = null;
+            }
+            if ($execution !== null) {
+                // Execution was re-written by one of the above cases, so we return this different execution. If it
+                // was not rewritten we fall through and proceed with the stack-based strategy below.
+                return [
+                    'initialization' => $compiledOnlyNode['initialization'],
+                    'execution' => $execution,
+                ];
+            }
+        }
+
+        $stack = $this->convertArrayNode(new ArrayNode($booleanStack));
+        $initializationPhpCode = $stack['initialization'] . chr(10);
 
         $parser = new BooleanParser();
         $compiledExpression = $parser->compile(BooleanNode::reconcatenateExpression($node->getStack()));

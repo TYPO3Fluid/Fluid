@@ -100,20 +100,48 @@ class NodeConverterTest extends UnitTestCase
         $multiRoot->addChildNode(new TextNode('bar'));
         $multiRoot->addChildNode(new TextNode('baz'));
         return [
-            [
+            'Reference to all variable converts to getAll() call' => [
                 new ObjectAccessorNode('_all'),
                 '$renderingContext->getVariableProvider()->getAll()'
             ],
-            [
+            'Reference to foo.bar converts to getByPath() call' => [
                 new ObjectAccessorNode('foo.bar'),
                 '$renderingContext->getVariableProvider()->getByPath(\'foo.bar\', $array0)'
             ],
-            [
+            'Reference to foo.bar with array accessors converts to array-access inline statement' => [
                 new ObjectAccessorNode('foo.bar', ['array', 'array']),
                 'isset($renderingContext->getVariableProvider()[\'foo\'][\'bar\']) ? $renderingContext->getVariableProvider()[\'foo\'][\'bar\'] : NULL'
             ],
-            [
+            'Boolean node with text TRUE converts to boolean true' => [
                 new BooleanNode(new TextNode('TRUE')),
+                'true'
+            ],
+            'Boolean node with text FALSE converts to boolean false' => [
+                new BooleanNode(new TextNode('FALSE')),
+                'false'
+            ],
+            'Boolean node with text 1 converts to boolean true' => [
+                new BooleanNode(new TextNode('1')),
+                'true'
+            ],
+            'Boolean node with text 0 converts to boolean false' => [
+                new BooleanNode(new TextNode('0')),
+                'false'
+            ],
+            'Boolean node with number 1 converts to boolean true' => [
+                new BooleanNode(new NumericNode(1)),
+                'true'
+            ],
+            'Boolean node with number 0 converts to boolean false' => [
+                new BooleanNode(new NumericNode(0)),
+                'false'
+            ],
+            'Boolean node with empty string converts to boolean false' => [
+                new BooleanNode(new TextNode('')),
+                'false'
+            ],
+            'Arbitrary expression passed to boolean parser runtime evaluation' => [
+                new BooleanNode(new TextNode('1 == 1')),
                 'TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode::convertToBoolean(
 					$expression1(
 						TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode::gatherContext($renderingContext, $array0)
@@ -121,16 +149,7 @@ class NodeConverterTest extends UnitTestCase
 					$renderingContext
 				)'
             ],
-            [
-                new BooleanNode(new TextNode('1 = 1')),
-                'TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode::convertToBoolean(
-					$expression1(
-						TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode::gatherContext($renderingContext, $array0)
-					),
-					$renderingContext
-				)'
-            ],
-            [
+            'Tree boolean converts to convertToBoolean() call' => [
                 $treeBoolean,
                 'TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode::convertToBoolean(
 					$expression1(
@@ -139,15 +158,15 @@ class NodeConverterTest extends UnitTestCase
 					$renderingContext
 				)'
             ],
-            [
+            'Ternary expression node converts to closure' => [
                 new TernaryExpressionNode('1 ? 2 : 3', [1, 2, 3]),
                 '$ternaryExpression1(TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\Expression\TernaryExpressionNode::gatherContext($renderingContext, $array0[1]), $renderingContext)'
             ],
-            [
+            'Escaping node converts to inline htmlspecialchars() check/call' => [
                 new EscapingNode(new TextNode('foo')),
                 'call_user_func_array( function ($var) { return (is_string($var) || (is_object($var) && method_exists($var, \'__toString\')) ? htmlspecialchars((string) $var, ENT_QUOTES) : $var); }, [\'foo\'])'
             ],
-            [
+            'ViewHelperNode converts to renderStatic() call' => [
                 new ViewHelperNode(
                     new RenderingContextFixture(),
                     'f',
@@ -157,14 +176,13 @@ class NodeConverterTest extends UnitTestCase
                 ),
                 'TYPO3Fluid\Fluid\ViewHelpers\RenderViewHelper::renderStatic($arguments0, $renderChildrenClosure1, $renderingContext)'
             ],
-            [$simpleRoot, '\'foobar\''],
-            [$multiRoot, '$output0'],
-            [new TextNode('test'), '\'test\''],
-            [new NumericNode('3'), '3'],
-            [new NumericNode('4.5'), '4.5'],
-            [new ArrayNode(['foo', 'bar']), '$array0'],
-            [new ArrayNode([0, new TextNode('test'), new ArrayNode(['foo', 'bar'])]), '$array0'],
-            [$this->getMockBuilder(NodeInterface::class)->getMockForAbstractClass(), '']
+            'Simple single-child root node converts to first child of root node' => [$simpleRoot, '\'foobar\''],
+            'Complex multi-child root node converts to variable reference' => [$multiRoot, '$output0'],
+            'Text node converts to string' => [new TextNode('test'), '\'test\''],
+            'Numeric node converts to string' => [new NumericNode('3'), '3'],
+            'Numeric node converts to string and preserves decimals' => [new NumericNode('4.5'), '4.5'],
+            'Array node converts to variable reference' => [new ArrayNode(['foo', 'bar']), '$array0'],
+            'Empty node converts to empty string' => [$this->getMockBuilder(NodeInterface::class)->getMockForAbstractClass(), '']
         ];
     }
 }
