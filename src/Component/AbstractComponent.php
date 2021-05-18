@@ -100,6 +100,8 @@ abstract class AbstractComponent implements ComponentInterface
             if ($lastNode) {
                 $lastNode->appendText($component->getText());
             }
+        } elseif ($component instanceof ArgumentViewHelper) {
+            $this->getArguments()[$component->getArguments()['name']] = $component;
         } else {
             $this->children[] = $component;
             $this->_lastAddedWasTextNode = $component instanceof TextNode;

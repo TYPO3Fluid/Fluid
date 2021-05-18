@@ -122,6 +122,11 @@ class Sequencer
      */
     protected $nodeStack = [];
 
+    /**
+     * @var array<string, array<SequencingException>>
+     */
+    protected $nodeSequencingExceptionStack = [];
+
     public function __construct(
         RenderingContextInterface $renderingContext,
         Contexts $contexts,
@@ -191,13 +196,14 @@ class Sequencer
                     try {
                         $childNode = $this->sequenceTagNode();
                     } catch (Exception $exception) {
+                        if (!$exception instanceof SequencingException) {
+                            $exception = $this->createErrorAtPosition(
+                                $exception->getMessage(),
+                                $exception->getCode()
+                            );
+                        }
                         $childNode = new TextNode(
-                            $this->renderingContext->getErrorHandler()->handleParserError(
-                                $this->createErrorAtPosition(
-                                    $exception->getMessage(),
-                                    $exception->getCode()
-                                )
-                            )
+                            $this->renderingContext->getErrorHandler()->handleParserError($exception)
                         );
                     }
                     $this->splitter->switch($this->contexts->root);
@@ -343,6 +349,7 @@ class Sequencer
         $closing = false;
         $escapingEnabledBackup = $this->escapingEnabled;
         $viewHelperNode = null;
+        $argumentValidationError = null;
 
         $this->splitter->switch($this->contexts->tag);
         $this->sequence->next();
@@ -438,7 +445,15 @@ class Sequencer
 
                     if (!$closing || $selfClosing) {
                         $viewHelperNode = $viewHelperNode ?? $this->resolver->createViewHelperInstance($namespace, (string) $method);
-                        $viewHelperNode->onOpen($this->renderingContext)->getArguments()->validate();
+                        try {
+                            $viewHelperNode->onOpen($this->renderingContext)->getArguments()->validate();
+                        } catch (Exception $e) {
+                            $argumentValidationError = $this->createErrorAtPosition(
+                                $e->getMessage(),
+                                1621337984
+                            );
+                            $this->addSequencingExceptionToStack($viewHelperNode, $argumentValidationError);
+                        }
                     } else {
                         // $closing will be true and $selfClosing false; add to stack, continue with children.
                         $viewHelperNode = array_pop($this->nodeStack);
@@ -484,6 +499,36 @@ class Sequencer
                         }
                         $this->nodeStack[] = $viewHelperNode;
                         return null;
+                    }
+
+                    $argumentValidationError = null;
+                    $nodeHash = spl_object_hash($viewHelperNode);
+                    // Check if we already have a validation error on the sequencing error stack
+                    foreach ($this->nodeSequencingExceptionStack[$nodeHash] ?? [] as $sequencingException) {
+                        if ($sequencingException->getCode() === 1621337984) {
+                            $argumentValidationError = $sequencingException;
+                            break;
+                        }
+                    }
+
+                    try {
+                        // Revalidate the viewhelper arguments as problems may now be solved by adding required
+                        // properties via the f:argument viewhelper
+                        $viewHelperNode->getArguments()->validate();
+                        // reset the argument validation error as everything is fine now
+                        $argumentValidationError = null;
+                    } catch (Exception $e) {
+                        // if there is already an $argumentValidationError in the stack we use this one
+                        // instead of creating a new one at the current position. So we are sure the
+                        // error position points to the initial problem.
+                        $argumentValidationError = $argumentValidationError ?? $this->createErrorAtPosition(
+                            $e->getMessage(),
+                            1621337985
+                        );
+                    }
+
+                    if ($argumentValidationError !== null) {
+                        throw $argumentValidationError;
                     }
 
                     $viewHelperNode = $viewHelperNode->onClose($this->renderingContext);
@@ -536,6 +581,15 @@ class Sequencer
         // argument, missing key, wrong quotes, bad inline and *everything* else with the exception of EOF). Even a
         // stray null byte would not be caught here as null byte is not part of the symbol collection for "tag" context.
         throw $this->createErrorAtPosition('Unexpected token in tag sequencing', 1557700786);
+    }
+
+    protected function addSequencingExceptionToStack(ComponentInterface $node, SequencingException $exception): void
+    {
+        $nodeHash = spl_object_hash($node);
+        if (!isset($this->nodeSequencingExceptionStack[$nodeHash])) {
+            $this->nodeSequencingExceptionStack[$nodeHash] = [];
+        }
+        $this->nodeSequencingExceptionStack[$nodeHash][] = $exception;
     }
 
     protected function sequenceInlineNodes(bool $allowArray = true): ComponentInterface
