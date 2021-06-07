@@ -21,7 +21,7 @@ class AtomNode extends AbstractComponent
     protected $escapeOutput = false;
 
     protected $file;
-    
+
     public function setName(?string $name): ComponentInterface
     {
         $this->name = $name;
@@ -38,7 +38,14 @@ class AtomNode extends AbstractComponent
     {
         $atom = clone $renderingContext->getTemplateParser()->parseFile($this->file);
         $arguments = clone $atom->getArguments();
-        $arguments->assignAll((array) $this->getArguments()->getAllRaw() + $renderingContext->getVariableProvider()->getAll())->setRenderingContext($renderingContext);
+        $evaluatedArguments = [];
+        foreach ((array) $this->getArguments()->getAllRaw() as $key => $argument) {
+            if ($argument instanceof ComponentInterface) {
+                $argument = $argument->evaluate($renderingContext);
+            }
+            $evaluatedArguments[$key] = $argument;
+        }
+        $arguments->assignAll($evaluatedArguments + $renderingContext->getVariableProvider()->getAll())->setRenderingContext($renderingContext);
         foreach ($this->getChildren() as $child) {
             $atom->addChild($child);
         }
