@@ -1,0 +1,24 @@
+Test with recursive object accessor in array
+<f:variable name="evaluatedValue1" value="{foo.{subArrayKeyValue}}" />
+1:{evaluatedValue1}
+
+Test with recursive object accessor in subarray
+<f:variable name="evaluatedValue2" value="{0: '{foo.{subArrayKeyValue}}'}" />
+2:{evaluatedValue2.0}
+
+Test with recursive object accessor in parameter array and node content
+<f:variable name="evaluatedValue3" value="{bar: '{foo.{subArrayKeyValue}}'}" />
+3:{evaluatedValue3.{subArrayKeyValue}}
+
+Test with recursive object accessor in ECMA style array and node content
+<f:variable name="evaluatedValue4" value="['{foo.{subArrayKeyValue}}']" />
+4:{evaluatedValue4.0}
+
+Test with linebreak
+<f:variable name="evaluatedValue5" value="{
+  0: '{foo.{subArrayKeyValue}}'
+  }" />
+5:{evaluatedValue5.0}
+
+Test with recursive object accessor as atom parameter
+6:<test:testAtom foo="{foo.{subArrayKeyValue}}" />

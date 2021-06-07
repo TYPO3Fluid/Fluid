@@ -93,6 +93,8 @@ abstract class BaseFunctionalTestCase extends UnitTestCase
         $view = $this->getView();
         $view->getRenderingContext()->getTemplatePaths()->setTemplateSource($source);
         $view->getRenderingContext()->getViewHelperResolver()->addNamespace('test', 'TYPO3Fluid\\Fluid\\Tests\\Functional\\Fixtures\\ViewHelpers');
+        $view->getRenderingContext()->getViewHelperResolver()->addAtomPath('test', __DIR__ . '/Fixtures/Atoms/');
+
         $view->assignMultiple($variables);
         $output = trim((string)$view->render());
         foreach ($expected as $expectedValue) {
