@@ -9,6 +9,7 @@ namespace TYPO3Fluid\Fluid\Core\Parser\SyntaxTree;
 
 use TYPO3Fluid\Fluid\Component\AbstractComponent;
 use TYPO3Fluid\Fluid\Component\ComponentInterface;
+use TYPO3Fluid\Fluid\Core\Parser\Exception;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -42,6 +43,9 @@ class EscapingNode extends AbstractComponent
     public function evaluate(RenderingContextInterface $renderingContext)
     {
         $evaluated = $this->node->evaluate($renderingContext);
+        if (is_array($evaluated)) {
+            throw new Exception('Array can not be converted to string: ' . var_export($evaluated, true), 1623650387);
+        }
         if (is_string($evaluated) || (is_object($evaluated) && method_exists($evaluated, '__toString'))) {
             return htmlspecialchars((string) $evaluated, ENT_QUOTES);
         }
