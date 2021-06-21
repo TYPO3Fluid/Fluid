@@ -41,6 +41,12 @@ Direct access of numeric prefixed variable: {123numericprefix}
 	}
 }"/>
 
+<!-- Passing arguments to a sections/partials using f:render in tag content -->
+<f:render section="Tertiary">
+    <f:argument name="arg1">First argument</f:argument>
+    <f:argument name="arg2">Second argument</f:argument>
+</f:render>
+
 </f:section>
 
 <f:section name="Secondary">
@@ -51,4 +57,9 @@ Received $array.printf with formatted string {array.printf -> f:format.printf(ar
 Received $array.baz with value {array.baz}
 Received $array.xyz.foobar with value {array.xyz.foobar}
 Received $myVariable with value {myVariable}
+</f:section>
+
+<f:section name="Tertiary">
+Input argument "arg1" was: {arg1}
+Input argument "arg2" was: {arg2}
 </f:section>

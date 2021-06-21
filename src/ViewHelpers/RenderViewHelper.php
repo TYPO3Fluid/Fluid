@@ -142,7 +142,20 @@ class RenderViewHelper extends AbstractViewHelper
         $delegate = $arguments['delegate'];
         /** @var RenderableInterface $renderable */
         $renderable = $arguments['renderable'];
+
+        // Prepare a delegate variable provider that will be possible to extract after rendering the child closure.
+        // Any variable defined therein gets used as argument and overrides any argument of the same name.
+        // Note: not using late static binding here is a conscious decision: if late static binding had been used
+        // then f:variable would not be able to reference this ViewHelper class' stack variable correctly.
+        $viewHelperVariableContainer = $renderingContext->getViewHelperVariableContainer();
+        $collector = $renderingContext->getVariableProvider()->getScopeCopy($variables);
+
+        $viewHelperVariableContainer->pushDelegateVariableProvider($collector);
+
         $tagContent = $renderChildrenClosure();
+
+        $variables = $viewHelperVariableContainer->popDelegateVariableProvider()->getAll();
+
         if ($arguments['contentAs']) {
             $variables[$arguments['contentAs']] = $tagContent;
         }

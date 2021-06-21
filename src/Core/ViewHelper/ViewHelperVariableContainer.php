@@ -6,6 +6,7 @@ namespace TYPO3Fluid\Fluid\Core\ViewHelper;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\View\ViewInterface;
 
 /**
@@ -28,6 +29,69 @@ class ViewHelperVariableContainer
      * @var ViewInterface
      */
     protected $view;
+
+    /**
+     * @var VariableProviderInterface[]
+     */
+    protected $delegates = [];
+
+    /**
+     * Push a new delegate variable container to a stack.
+     *
+     * If a ViewHelper requires a storage to collect variables which, for
+     * example, are filled by evaluating the child (tag content) closure,
+     * this method can be used to add a special delegate variable container
+     * stored in a stack. Once the variables you need to collect have been
+     * collected, calling `popDelegateVariableProvider` removes the delegate
+     * from the stack.
+     *
+     * The point of a stack is to avoid resetting a storage every time a
+     * ViewHelper is rendered. In the case of `f:render` it means one storage
+     * is created and filled for every one call to the ViewHelper.
+     *
+     * It is VITAL that you also "pop" any delegate you push to this stack!
+     *
+     * @param VariableProviderInterface $variableProvider
+     */
+    public function pushDelegateVariableProvider(VariableProviderInterface $variableProvider)
+    {
+        $this->delegates[] = $variableProvider;
+    }
+
+    /**
+     * Get the topmost delegate variable container that was previously pushed
+     * onto the stack by pushDelegateVariableContainer(). This method returns
+     * a reference to the storage that was last added to the stack without
+     * removing the variable provider from the stack.
+     *
+     * Is used in ViewHelpers that assign variables in variable providers in
+     * the stack - as a means to get the variable storage used by the "closest
+     * parent", e.g. when called in `f:argument` used inside `f:render`, will
+     * read the delegate variable provider inserted by that parent `f:render`.
+     *
+     * @return VariableProviderInterface|null
+     */
+    public function getTopmostDelegateVariableProvider()
+    {
+        return end($this->delegates) ?: null;
+    }
+
+    /**
+     * Return and REMOVE the topmost delegate variable provider. This method
+     * must be called after you finish sub-rendering with a delegated variable
+     * provider that was added with `pushDelegateVariableProvider`. Calling
+     * the method removes the delegate and returns the stack to the previous
+     * state it was in.
+     *
+     * To avoid removing from the stack, use `getTopmostDelegateVariableProvider`.
+     *
+     * @param string $viewHelperClassName
+     * @return VariableProviderInterface|null
+     */
+    public function popDelegateVariableProvider()
+    {
+        return array_pop($this->delegates);
+    }
 
     /**
      * Add a variable to the Variable Container. Make sure that $viewHelperName is ALWAYS set

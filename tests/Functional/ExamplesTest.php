@@ -224,7 +224,9 @@ class ExamplesTest extends BaseTestCase
                     'Received $array.printf with formatted string Formatted string, value: formatted',
                     'Received $array.baz with value 42',
                     'Received $array.xyz.foobar with value Escaped sub-string',
-                    'Received $myVariable with value Nice string'
+                    'Received $myVariable with value Nice string',
+                    'Input argument "arg1" was: First argument',
+                    'Input argument "arg2" was: Second argument',
                 ]
             ],
             'example_variableprovider.php' => [
