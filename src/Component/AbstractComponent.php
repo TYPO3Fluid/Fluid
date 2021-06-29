@@ -266,7 +266,9 @@ abstract class AbstractComponent implements ComponentInterface
             if ($childNode instanceof EmbeddedComponentInterface) {
                 continue;
             }
-            $evaluatedNodes[] = $childNode->evaluate($renderingContext);
+            $childNodeCopy = clone $childNode;
+            $childNodeCopy->setArguments(clone $childNodeCopy->getArguments());
+            $evaluatedNodes[] = $childNodeCopy->evaluate($renderingContext);
         }
         // Make decisions about what to actually return
         if (empty($evaluatedNodes)) {
