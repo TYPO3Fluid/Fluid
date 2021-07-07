@@ -217,15 +217,17 @@ abstract class AbstractTemplateView extends AbstractView
     public function renderSection($sectionName, array $variables = [], $ignoreUnknown = false)
     {
         $renderingContext = $this->getCurrentRenderingContext();
-
+        $renderingTypeOnNextLevel = $this->getCurrentRenderingType();
         if ($this->getCurrentRenderingType() === self::RENDERING_LAYOUT) {
             // in case we render a layout right now, we will render a section inside a TEMPLATE.
             $renderingTypeOnNextLevel = self::RENDERING_TEMPLATE;
-        } else {
-            $renderingContext = clone $renderingContext;
-            $renderingContext->setVariableProvider($renderingContext->getVariableProvider()->getScopeCopy($variables));
-            $renderingTypeOnNextLevel = $this->getCurrentRenderingType();
+            if (empty($variables)) {
+                $variables = $renderingContext->getVariableProvider()->getAll();
+            }
         }
+        $variableProvider = $renderingContext->getVariableProvider()->getScopeCopy($variables);
+        $renderingContext = clone $renderingContext;
+        $renderingContext->setVariableProvider($variableProvider);
 
         try {
             $parsedTemplate = $this->getCurrentParsedTemplate();

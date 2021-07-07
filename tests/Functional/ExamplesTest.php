@@ -240,6 +240,12 @@ class ExamplesTest extends BaseTestCase
                     'Rendered via DynamicLayout, section "Main":',
                 ]
             ],
+            'example_layoutcontentas.php' => [
+                'example_layoutcontentas.php',
+                [
+                    'Content from layout via contentAs',
+                ]
+            ],
             'example_cachestatic.php' => [
                 'example_cachestatic.php',
                 [
